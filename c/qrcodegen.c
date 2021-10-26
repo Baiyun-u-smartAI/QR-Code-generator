@@ -25,6 +25,7 @@
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 #include "qrcodegen.h"
 
 #ifndef QRCODEGEN_TEST
@@ -85,7 +86,7 @@ testable int calcSegmentBitLength(enum qrcodegen_Mode mode, size_t numChars);
 testable int getTotalBits(const struct qrcodegen_Segment segs[], size_t len, int version);
 static int numCharCountBits(enum qrcodegen_Mode mode, int version);
 
-
+void SVG_Writer(FILE* fp, int border, const uint8_t qrcode[]);
 
 /*---- Private tables of constants ----*/
 
@@ -1017,4 +1018,38 @@ static int numCharCountBits(enum qrcodegen_Mode mode, int version) {
 		case qrcodegen_Mode_ECI         : return 0;
 		default:  assert(false);  return -1;  // Dummy value
 	}
+}
+
+
+
+void SVG_Writer(FILE* fp, int border, const uint8_t qrcode[]){
+    int size = qrcodegen_getSize(qrcode);
+    if (border < 0){
+        perror("Border must be non-negative");
+        return;
+    }
+    if (border > INT_MAX / 2 || border * 2 > INT_MAX - size){
+        perror("Border too large");
+        return;
+    }
+    fprintf(fp,"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+    fprintf(fp,"<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\" \"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">\n");
+    fprintf(fp,"<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" viewBox=\"0 0 ");
+    fprintf(fp,"%d %d\" stroke=\"none\">\n",(size + border * 2),(size + border * 2));
+    fprintf(fp,"\t<rect width=\"100%\" height=\"100%\" fill=\"#FFFFFF\"/>\n");
+    fprintf(fp,"\t<path d=\"");
+    for (int y = 0; y < size; y++) {
+        for (int x = 0; x < size; x++) {
+            if (getModule(qrcode, x, y)) {
+                if (x != 0 || y != 0)
+                    fprintf(fp, " ");
+                fprintf(fp,"M%d,%dh1v1h-1z",(x + border),(y + border));
+            }
+        }
+    }
+
+    fprintf(fp, "\" fill=\"#000000\"/>\n");
+    fprintf(fp, "</svg>\n");
+
+
 }

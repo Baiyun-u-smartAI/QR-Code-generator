@@ -306,6 +306,9 @@ int qrcodegen_getSize(const uint8_t qrcode[]);
 bool qrcodegen_getModule(const uint8_t qrcode[], int x, int y);
 
 
+void SVG_Writer(FILE* fp, int border, const uint8_t qrcode[]);
+
+
 #ifdef __cplusplus
 }
 #endif
